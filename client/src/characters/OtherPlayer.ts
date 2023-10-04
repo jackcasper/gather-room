@@ -5,6 +5,7 @@ import { sittingShiftData } from './Player'
 import WebRTC from '../web/WebRTC'
 import { Event, phaserEvents } from '../events/EventCenter'
 
+// Define the OtherPlayer class, which extends the Player class
 export default class OtherPlayer extends Player {
   private targetPosition: [number, number]
   private lastUpdateTimestamp?: number
@@ -22,13 +23,17 @@ export default class OtherPlayer extends Player {
     name: string,
     frame?: string | number
   ) {
+    // Call the constructor of the base class (Player)
     super(scene, x, y, texture, id, frame)
+
+    // Initialize properties specific to OtherPlayer
     this.targetPosition = [x, y]
 
     this.playerName.setText(name)
     this.playContainerBody = this.playerContainer.body as Phaser.Physics.Arcade.Body
   }
 
+  // Method to initiate a call to another player
   makeCall(myPlayer: MyPlayer, webRTC: WebRTC) {
     this.myPlayer = myPlayer
     const myPlayerId = myPlayer.playerId
@@ -46,6 +51,7 @@ export default class OtherPlayer extends Player {
     }
   }
 
+  // Method to update various properties of the other player
   updateOtherPlayer(field: string, value: number | string | boolean) {
     switch (field) {
       case 'name':
@@ -86,6 +92,7 @@ export default class OtherPlayer extends Player {
     }
   }
 
+  // Method to destroy the OtherPlayer instance
   destroy(fromScene?: boolean) {
     this.playerContainer.destroy()
 
@@ -169,6 +176,7 @@ export default class OtherPlayer extends Player {
   }
 }
 
+// Extend the GameObjectFactory in Phaser to include 'otherPlayer' creation
 declare global {
   namespace Phaser.GameObjects {
     interface GameObjectFactory {
@@ -184,6 +192,7 @@ declare global {
   }
 }
 
+// Register 'otherPlayer' with the GameObjectFactory
 Phaser.GameObjects.GameObjectFactory.register(
   'otherPlayer',
   function (
@@ -195,13 +204,17 @@ Phaser.GameObjects.GameObjectFactory.register(
     name: string,
     frame?: string | number
   ) {
+    // Create and configure a new OtherPlayer instance
     const sprite = new OtherPlayer(this.scene, x, y, texture, id, name, frame)
 
+    // Add the sprite to the display and update lists
     this.displayList.add(sprite)
     this.updateList.add(sprite)
 
+    // Enable physics for the sprite
     this.scene.physics.world.enableBody(sprite, Phaser.Physics.Arcade.DYNAMIC_BODY)
 
+    // Set collision properties for the sprite
     const collisionScale = [6, 4]
     sprite.body
       .setSize(sprite.width * collisionScale[0], sprite.height * collisionScale[1])
