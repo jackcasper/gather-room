@@ -16,6 +16,7 @@ import { NavKeys } from '../../../types/KeyboardState'
 import { JoystickMovement } from '../components/Joystick'
 import { openURL } from '../utils/helpers'
 
+// Define the MyPlayer class, which extends the Player class
 export default class MyPlayer extends Player {
   private playContainerBody: Phaser.Physics.Arcade.Body
   private chairOnSit?: Chair
@@ -28,26 +29,33 @@ export default class MyPlayer extends Player {
     id: string,
     frame?: string | number
   ) {
+     // Call the constructor of the base class (Player)
     super(scene, x, y, texture, id, frame)
+
+    // Initialize properties specific to MyPlayer
     this.playContainerBody = this.playerContainer.body as Phaser.Physics.Arcade.Body
   }
 
+  // Method to set the player's name
   setPlayerName(name: string) {
     this.playerName.setText(name)
     phaserEvents.emit(Event.MY_PLAYER_NAME_CHANGE, name)
     store.dispatch(pushPlayerJoinedMessage(name))
   }
 
+  // Method to set the player's texture and trigger related events
   setPlayerTexture(texture: string) {
     this.playerTexture = texture
     this.anims.play(`${this.playerTexture}_idle_down`, true)
     phaserEvents.emit(Event.MY_PLAYER_TEXTURE_CHANGE, this.x, this.y, this.anims.currentAnim.key)
   }
 
+  // Method to handle joystick movement
   handleJoystickMovement(movement: JoystickMovement) {
     this.joystickMovement = movement
   }
 
+  // Update method to handle player's behavior and interactions
   update(
     playerSelector: PlayerSelector,
     cursors: NavKeys,
@@ -55,10 +63,13 @@ export default class MyPlayer extends Player {
     keyR: Phaser.Input.Keyboard.Key,
     network: Network
   ) {
+    // Check if cursors are available
     if (!cursors) return
 
+    // Get the currently selected item
     const item = playerSelector.selectedItem
 
+    // Check if the 'R' key is pressed to perform an action
     if (Phaser.Input.Keyboard.JustDown(keyR)) {
       switch (item?.itemType) {
         case ItemType.COMPUTER:
@@ -77,6 +88,7 @@ export default class MyPlayer extends Player {
       }
     }
 
+    // Handle different player behaviors (e.g., IDLE, SITTING)
     switch (this.playerBehavior) {
       case PlayerBehavior.IDLE:
         // if press E in front of selected chair
@@ -106,6 +118,7 @@ export default class MyPlayer extends Player {
                 )
               }
 
+              // Play sitting animation
               this.play(`${this.playerTexture}_sit_${chairItem.itemDirection}`, true)
               playerSelector.selectedItem = undefined
               if (chairItem.itemDirection === 'up') {
@@ -126,6 +139,7 @@ export default class MyPlayer extends Player {
           return
         }
 
+        // Handle character movement based on user input or joystick
         const speed = 200
         let vx = 0
         let vy = 0
@@ -199,6 +213,7 @@ export default class MyPlayer extends Player {
   }
 }
 
+// Extend the GameObjectFactory in Phaser to include 'myPlayer' creation
 declare global {
   namespace Phaser.GameObjects {
     interface GameObjectFactory {
@@ -207,6 +222,7 @@ declare global {
   }
 }
 
+// Register 'myPlayer' with the GameObjectFactory
 Phaser.GameObjects.GameObjectFactory.register(
   'myPlayer',
   function (
@@ -217,13 +233,18 @@ Phaser.GameObjects.GameObjectFactory.register(
     id: string,
     frame?: string | number
   ) {
+
+    // Create and configure a new MyPlayer instance
     const sprite = new MyPlayer(this.scene, x, y, texture, id, frame)
 
+    // Add the sprite to the display and update lists
     this.displayList.add(sprite)
     this.updateList.add(sprite)
 
+    // Enable physics for the sprite
     this.scene.physics.world.enableBody(sprite, Phaser.Physics.Arcade.DYNAMIC_BODY)
 
+    // Set collision properties for the sprite
     const collisionScale = [0.5, 0.2]
     sprite.body
       .setSize(sprite.width * collisionScale[0], sprite.height * collisionScale[1])
