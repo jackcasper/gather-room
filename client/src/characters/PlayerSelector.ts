@@ -3,15 +3,20 @@ import MyPlayer from './MyPlayer'
 import { PlayerBehavior } from '../../../types/PlayerBehavior'
 import Item from '../items/Item'
 import { NavKeys } from '../../../types/KeyboardState'
+
+// Define the PlayerSelector class, which extends Phaser.GameObjects.Zone
 export default class PlayerSelector extends Phaser.GameObjects.Zone {
   selectedItem?: Item
 
   constructor(scene: Phaser.Scene, x: number, y: number, width: number, height: number) {
+    // Call the constructor of the base class (Phaser.GameObjects.Zone)
     super(scene, x, y, width, height)
 
+    // Enable physics for the selector
     scene.physics.add.existing(this)
   }
 
+  // Method to update the player selection box and item interaction
   update(player: MyPlayer, cursors: NavKeys) {
     if (!cursors) {
       return
