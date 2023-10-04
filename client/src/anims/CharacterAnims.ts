@@ -1,8 +1,13 @@
 import Phaser from 'phaser'
 
+// Define a function to create character animations
 export const createCharacterAnims = (anims: Phaser.Animations.AnimationManager) => {
+  // Define a frame rate constant
   const animsFrameRate = 15
 
+
+  // Create animations for the character named
+  // These animations are for idle, running, and sitting in different directions
   anims.create({
     key: 'nancy_idle_right',
     frames: anims.generateFrameNames('nancy', {
