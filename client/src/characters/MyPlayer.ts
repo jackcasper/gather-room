@@ -82,7 +82,7 @@ export default class MyPlayer extends Player {
           break
         case ItemType.VENDINGMACHINE:
           // hacky and hard-coded, but leaving it as is for now
-          const url = 'https://www.hdmnetwork.com'
+          const url = 'https://www.youtube.com/watch?v=lg5WKsVnEA4'
           openURL(url)
           break
       }
