@@ -26,6 +26,5 @@ export default class Background extends Phaser.Scene {
     const scale = Math.max(sceneWidth / backdropImage.width, sceneHeight / backdropImage.height)
     backdropImage.setScale(scale).setScrollFactor(0)
 
-    
     }
   }

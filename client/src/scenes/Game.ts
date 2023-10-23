@@ -1,15 +1,17 @@
 import Phaser from 'phaser'
-
 // import { debugDraw } from '../utils/debug'
 import { createCharacterAnims } from '../anims/CharacterAnims'
 
 import Item from '../items/Item'
+
+import ZoomController from '../components/ZoomController'
 import Chair from '../items/Chair'
 import Computer from '../items/Computer'
 import Whiteboard from '../items/Whiteboard'
 import VendingMachine from '../items/VendingMachine'
 import '../characters/MyPlayer'
 import '../characters/OtherPlayer'
+import '../index.scss'
 import MyPlayer from '../characters/MyPlayer'
 import OtherPlayer from '../characters/OtherPlayer'
 import PlayerSelector from '../characters/PlayerSelector'
@@ -21,6 +23,7 @@ import { ItemType } from '../../../types/Items'
 import store from '../stores'
 import { setFocused, setShowChat } from '../stores/ChatStore'
 import { NavKeys, Keyboard } from '../../../types/KeyboardState'
+
 
 export default class Game extends Phaser.Scene {
   network!: Network
@@ -34,6 +37,7 @@ export default class Game extends Phaser.Scene {
   private otherPlayerMap = new Map<string, OtherPlayer>()
   computerMap = new Map<string, Computer>()
   private whiteboardMap = new Map<string, Whiteboard>()
+  private zoomController!: ZoomController;
 
   constructor() {
     super('game')
@@ -65,6 +69,8 @@ export default class Game extends Phaser.Scene {
   enableKeys() {
     this.input.keyboard.enabled = true
   }
+
+
 
   create(data: { network: Network }) {
     if (!data.network) {
@@ -138,7 +144,8 @@ export default class Game extends Phaser.Scene {
 
     this.otherPlayers = this.physics.add.group({ classType: OtherPlayer })
 
-    this.cameras.main.zoom = 1.5
+    // this.cameras.main.zoom = 1.5;
+    this.zoomController = new ZoomController(this)
     this.cameras.main.startFollow(this.myPlayer, true)
 
     this.physics.add.collider([this.myPlayer, this.myPlayer.playerContainer], groundLayer)
