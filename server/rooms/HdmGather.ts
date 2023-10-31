@@ -31,25 +31,30 @@ export class HdmGather extends Room<OfficeState> {
 
     let hasPassword = false
     if (password) {
+      // Hash the provided password for verification
       const salt = await bcrypt.genSalt(10)
       this.password = await bcrypt.hash(password, salt)
       hasPassword = true
     }
+    // Set room metadata including name, description, and password flag
     this.setMetadata({ name, description, hasPassword })
 
+    // Initialize the room's state with an instance of OfficeState
     this.setState(new OfficeState())
 
-    // HARD-CODED: Add 5 computers in a room
+    // HARD-CODED: Add 5 computers in the room
     for (let i = 0; i < 5; i++) {
       this.state.computers.set(String(i), new Computer())
     }
 
-    // HARD-CODED: Add 3 whiteboards in a room
+    // HARD-CODED: Add 3 whiteboards in the room
     for (let i = 0; i < 3; i++) {
       this.state.whiteboards.set(String(i), new Whiteboard())
     }
 
-    // when a player connect to a computer, add to the computer connectedUser array
+    // Register message handlers for various actions
+
+    // Add a user to a computer's connected users
     this.onMessage(Message.CONNECT_TO_COMPUTER, (client, message: { computerId: string }) => {
       this.dispatcher.dispatch(new ComputerAddUserCommand(), {
         client,
@@ -57,7 +62,7 @@ export class HdmGather extends Room<OfficeState> {
       })
     })
 
-    // when a player disconnect from a computer, remove from the computer connectedUser array
+    // Remove a user from a computer's connected users
     this.onMessage(Message.DISCONNECT_FROM_COMPUTER, (client, message: { computerId: string }) => {
       this.dispatcher.dispatch(new ComputerRemoveUserCommand(), {
         client,
@@ -65,7 +70,7 @@ export class HdmGather extends Room<OfficeState> {
       })
     })
 
-    // when a player stop sharing screen
+    // Stop screen sharing and notify other clients
     this.onMessage(Message.STOP_SCREEN_SHARE, (client, message: { computerId: string }) => {
       const computer = this.state.computers.get(message.computerId)
       computer.connectedUser.forEach((id) => {
@@ -77,7 +82,7 @@ export class HdmGather extends Room<OfficeState> {
       })
     })
 
-    // when a player connect to a whiteboard, add to the whiteboard connectedUser array
+    // Add a user to a whiteboard's connected users
     this.onMessage(Message.CONNECT_TO_WHITEBOARD, (client, message: { whiteboardId: string }) => {
       this.dispatcher.dispatch(new WhiteboardAddUserCommand(), {
         client,
@@ -85,7 +90,7 @@ export class HdmGather extends Room<OfficeState> {
       })
     })
 
-    // when a player disconnect from a whiteboard, remove from the whiteboard connectedUser array
+    // Remove a user from a whiteboard's connected users
     this.onMessage(
       Message.DISCONNECT_FROM_WHITEBOARD,
       (client, message: { whiteboardId: string }) => {
@@ -96,7 +101,7 @@ export class HdmGather extends Room<OfficeState> {
       }
     )
 
-    // when receiving updatePlayer message, call the PlayerUpdateCommand
+    // Update a player's position and animation
     this.onMessage(
       Message.UPDATE_PLAYER,
       (client, message: { x: number; y: number; anim: string }) => {
@@ -109,27 +114,27 @@ export class HdmGather extends Room<OfficeState> {
       }
     )
 
-    // when receiving updatePlayerName message, call the PlayerUpdateNameCommand
+    // Update a player's name
     this.onMessage(Message.UPDATE_PLAYER_NAME, (client, message: { name: string }) => {
       this.dispatcher.dispatch(new PlayerUpdateNameCommand(), {
         client,
         name: message.name,
       })
-    })
+    }
 
-    // when a player is ready to connect, call the PlayerReadyToConnectCommand
+    // Mark a player as ready to connect
     this.onMessage(Message.READY_TO_CONNECT, (client) => {
       const player = this.state.players.get(client.sessionId)
       if (player) player.readyToConnect = true
     })
 
-    // when a player is ready to connect, call the PlayerReadyToConnectCommand
+    // Mark a player's video as connected
     this.onMessage(Message.VIDEO_CONNECTED, (client) => {
       const player = this.state.players.get(client.sessionId)
       if (player) player.videoConnected = true
     })
 
-    // when a player disconnect a stream, broadcast the signal to the other player connected to the stream
+    // Disconnect a stream and notify other clients
     this.onMessage(Message.DISCONNECT_STREAM, (client, message: { clientId: string }) => {
       this.clients.forEach((cli) => {
         if (cli.sessionId === message.clientId) {
@@ -138,15 +143,15 @@ export class HdmGather extends Room<OfficeState> {
       })
     })
 
-    // when a player send a chat message, update the message array and broadcast to all connected clients except the sender
+    // Add a chat message, update the message array, and broadcast to other clients
     this.onMessage(Message.ADD_CHAT_MESSAGE, (client, message: { content: string }) => {
-      // update the message array (so that players join later can also see the message)
+      // Update the message array
       this.dispatcher.dispatch(new ChatMessageUpdateCommand(), {
         client,
         content: message.content,
       })
 
-      // broadcast to all currently connected clients except the sender (to render in-game dialog on top of the character)
+      // Broadcast the chat message to all connected clients except the sender
       this.broadcast(
         Message.ADD_CHAT_MESSAGE,
         { clientId: client.sessionId, content: message.content },
@@ -155,6 +160,7 @@ export class HdmGather extends Room<OfficeState> {
     })
   }
 
+  // Authenticate clients based on the provided password
   async onAuth(client: Client, options: { password: string | null }) {
     if (this.password) {
       const validPassword = await bcrypt.compare(options.password, this.password)
@@ -165,6 +171,7 @@ export class HdmGather extends Room<OfficeState> {
     return true
   }
 
+  // Handle a client joining the room
   onJoin(client: Client, options: any) {
     this.state.players.set(client.sessionId, new Player())
     client.send(Message.SEND_ROOM_DATA, {
@@ -174,6 +181,7 @@ export class HdmGather extends Room<OfficeState> {
     })
   }
 
+  // Handle a client leaving the room
   onLeave(client: Client, consented: boolean) {
     if (this.state.players.has(client.sessionId)) {
       this.state.players.delete(client.sessionId)
@@ -190,6 +198,7 @@ export class HdmGather extends Room<OfficeState> {
     })
   }
 
+  // Handle room disposal
   onDispose() {
     this.state.whiteboards.forEach((whiteboard) => {
       if (whiteboardRoomIds.has(whiteboard.roomId)) whiteboardRoomIds.delete(whiteboard.roomId)
